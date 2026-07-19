@@ -8,7 +8,7 @@ app_email = "hello@frappe.io"
 app_license = "GNU General Public License (v3)"
 source_link = "https://github.com/frappe/erpnext"
 app_logo_url = "/assets/erpnext/images/erpnext-logo.svg"
-app_home = "/desk"
+app_home = "/desk/home"
 
 add_to_apps_screen = [
 	{
@@ -17,6 +17,7 @@ add_to_apps_screen = [
 		"title": app_title,
 		"route": app_home,
 		"has_permission": "erpnext.check_app_permission",
+		"sequence_id": 1,
 	}
 ]
 
@@ -64,6 +65,9 @@ setup_wizard_requires = "assets/erpnext/js/setup_wizard.js"
 setup_wizard_stages = "erpnext.setup.setup_wizard.setup_wizard.get_setup_stages"
 
 after_install = "erpnext.setup.install.after_install"
+
+after_app_install = "erpnext.setup.install.after_app_install"
+after_app_uninstall = "erpnext.setup.install.after_app_uninstall"
 
 boot_session = "erpnext.startup.boot.boot_session"
 notification_config = "erpnext.startup.notifications.get_notification_config"
@@ -304,6 +308,18 @@ sounds = [
 
 has_upload_permission = {"Employee": "erpnext.setup.doctype.employee.employee.has_upload_permission"}
 
+permission_query_conditions = {
+	"Item": "erpnext.stock.doctype.company_restriction.company_restriction.get_permission_query_conditions",
+	"Customer": "erpnext.stock.doctype.company_restriction.company_restriction.get_permission_query_conditions",
+	"Supplier": "erpnext.stock.doctype.company_restriction.company_restriction.get_permission_query_conditions",
+}
+
+has_permission = {
+	"Item": "erpnext.stock.doctype.company_restriction.company_restriction.has_permission",
+	"Customer": "erpnext.stock.doctype.company_restriction.company_restriction.has_permission",
+	"Supplier": "erpnext.stock.doctype.company_restriction.company_restriction.has_permission",
+}
+
 has_website_permission = {
 	"Sales Order": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Quotation": "erpnext.controllers.website_list_for_contact.has_website_permission",
@@ -448,8 +464,6 @@ scheduler_events = {
 	"cron": {
 		"0/15 * * * *": [
 			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
-		],
-		"0/30 * * * *": [
 			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
 		],
 		# Hourly but offset by 30 minutes
@@ -507,6 +521,7 @@ scheduler_events = {
 	],
 	"weekly": [
 		"erpnext.accounts.utils.auto_create_exchange_rate_revaluation_weekly",
+		"erpnext.stock.doctype.stock_reposting_settings.stock_reposting_settings.repost_incorrect_valuation_entries",
 	],
 	"monthly_long": [
 		"erpnext.accounts.deferred_revenue.process_deferred_accounting",

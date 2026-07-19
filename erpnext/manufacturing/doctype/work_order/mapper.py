@@ -488,6 +488,7 @@ def _pick_list_mapping(postprocess):
 		"Work Order": {"doctype": "Pick List", "validation": {"docstatus": ["=", 1]}},
 		"Work Order Item": {
 			"doctype": "Pick List Item",
+			"field_no_map": ["transferred_qty"],
 			"postprocess": postprocess,
 			"condition": lambda doc: abs(doc.transferred_qty) < abs(doc.required_qty),
 		},
@@ -513,6 +514,41 @@ def _set_pick_list_item_qty(source, target, source_parent, for_qty, max_finished
 	target.uom = frappe.get_value("Item", source.item_code, "stock_uom")
 	target.stock_uom = target.uom
 	target.conversion_factor = 1
+
+
+@frappe.whitelist()
+def make_material_request(source_name: str, target_doc: str | dict | None = None):
+	frappe.has_permission("Material Request", "create", throw=True)
+
+	doc = get_mapped_doc("Work Order", source_name, _material_request_mapping(), target_doc)
+	doc.material_request_type = "Material Transfer"
+	return doc
+
+
+def _material_request_mapping():
+	return {
+		"Work Order": {
+			"doctype": "Material Request",
+			"validation": {"docstatus": ["=", 1]},
+			"field_map": {"name": "work_order"},
+		},
+		"Work Order Item": {
+			"doctype": "Material Request Item",
+			"field_map": [
+				("required_qty", "qty"),
+				("stock_uom", "uom"),
+				("source_warehouse", "from_warehouse"),
+			],
+			"postprocess": _set_material_request_item,
+			"condition": lambda doc: abs(doc.transferred_qty) < abs(doc.required_qty),
+		},
+	}
+
+
+def _set_material_request_item(source, target, source_parent):
+	target.warehouse = source_parent.wip_warehouse
+	target.qty = flt(source.required_qty) - flt(source.transferred_qty)
+	target.schedule_date = nowdate()
 
 
 @frappe.whitelist()

@@ -542,6 +542,7 @@ class PaymentRequest(Document):
 			bank_amount=bank_amount,
 			created_from_payment_request=True,
 		)
+		payment_entry.set_missing_ref_details(force=True)
 
 		payment_entry.update(
 			{
@@ -718,7 +719,7 @@ class PaymentRequest(Document):
 				row_number += TO_SKIP_NEW_ROW
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def make_payment_request(**args):
 	"""Make payment request"""
 
